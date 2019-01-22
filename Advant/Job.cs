@@ -56,13 +56,12 @@ namespace Advant
             SystemLogging += WriteLogs;
 
             Proxy _proxy = new Proxy();
-            AdvantParse parse = new AdvantParse();
             string userAgent = GetUserAgent();
 
             _web = new AdvantWeb(userAgent, SystemLogging);
 
             proxy = "";
-//            proxy = await _proxy.SearchProxy();
+            //            proxy = await _proxy.SearchProxy();
             if (proxy == null)
             {
                 SystemLogging("Проксі не знайдено");
@@ -84,9 +83,10 @@ namespace Advant
             }
 
             await SetCityFrom(dataInput.NameCityFrom);
-            
-
             List<string> filters = await GetFilters(dataInput);
+
+            AdvantParse parse = new AdvantParse(_web, cookie, proxy);
+            List<DataOutput> allData = new List<DataOutput>();
 
             //TODO async foreach
             foreach (var item in filters)
@@ -97,14 +97,21 @@ namespace Advant
                 while (noLoadHotels)
                 {
                     var jObj = await _web.LoadHotels(url, cookie, proxy);
-                    var percent = (int) jObj["percent"];
+                    var percent = (int)jObj["percent"];
                     if (percent == 100)
                     {
                         noLoadHotels = false;
                     }
                 }
 
-                var htmlHotels = await _web.GetHotels(url, cookie, proxy);
+
+                await parse.ParseHotel(url);
+
+
+
+                //var dataFromFilter = 
+                //allData.AddRange(dataFromFilter);
+
 
             }
         }
@@ -174,15 +181,8 @@ namespace Advant
         {
             List<string> listFilters = new List<string>();
 
-          //  string field1 = "&meal_types=all&price_from=0&price_till=100000";//price_budget=0-100000
-            //string field2 = "&";
-             //string flagCountry = "ru";
-
             try
             {
-                // if (data.NameCountryFrom.Equals("Украина"))
-                //    flagCountry = "ua";
-
                 string flagCountryFrom = data.NameCountryFrom.Equals("Украина") ? "ua" : "ru";
                 int addFromStar = data.NameCountryFrom.Equals("Украина") ? 0 : 399;
 
@@ -191,27 +191,13 @@ namespace Advant
                 string dateF = DateTime.Now.AddDays(data.StartDay).ToString("dd.MM.yyyy");
                 string dateT = DateTime.Now.AddDays(data.StartDay + data.CountDay - 1).ToString("dd.MM.yyyy");
 
-                
-
                 for (var nightCount = 6; nightCount <= 28; nightCount++)
                 {
                     for (var stars = 3; stars <= 5; stars++)
                     {
                         addFromStar += stars;
-                      //   if (data.NameCountryFrom.Equals("Украина"))
-                      //  {           
+
                         listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightCount}&night_till={nightCount}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={addFromStar}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
-                                              
-                        //    listFilters.Add("https://advant.club/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=1&child1_age=12&child2_age=0&child3_age=0&hotel_ratings=" + stars + fieldPrice);
-                        //   listFilters.Add("https://advant.club/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=1&child1_age=2&child2_age=0&child3_age=0&hotel_ratings=" + stars + fieldPrice);
-                       // }
-                        //else
-                        //{
-                        //   // int tempStars = stars + 399;
-                        //    listFilters.Add("https://advant.club/ru/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=0&child1_age=0&child2_age=0&child3_age=0&hotel_ratings=" + tempStars);
-                        //    listFilters.Add("https://advant.club/ru/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=1&child1_age=12&child2_age=0&child3_age=0&hotel_ratings=" + tempStars);
-                        //    listFilters.Add("https://advant.club/ru/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=1&child1_age=2&child2_age=0&child3_age=0&hotel_ratings=" + tempStars);
-                        //}
                     }
                 }
             }
@@ -227,18 +213,18 @@ namespace Advant
 
         private async Task<string> GetIdCountry(string flagUrl, string nameCountry)
         {
-            string  rez = "";
+            string rez = "";
 
             try
             {
-                var html= await _web.GetStartPage(flagUrl, cookie, proxy);
+                var html = await _web.GetStartPage(flagUrl, cookie, proxy);
                 var listCountrys = html.DocumentNode.SelectNodes("//select[@id='id_country']/option");
                 var selectCountry = listCountrys.FirstOrDefault(x => x.InnerText.Contains(nameCountry));
                 rez = selectCountry.Attributes["value"].Value;
             }
             catch (Exception e)
             {
-               // ConfigurationFile.WriteLog("Error in search id country for name\n" + e.ToString());
+                // ConfigurationFile.WriteLog("Error in search id country for name\n" + e.ToString());
             }
 
             return rez;

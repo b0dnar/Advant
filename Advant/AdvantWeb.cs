@@ -325,24 +325,22 @@ namespace Advant
             }
         }
 
-
-
-        public async Task<HtmlDocument> GetPageStr(string url, string cookie, string proxy)
+        public async Task<HtmlDocument> GetTours(string url, string cookie, string proxy)
         {
-            HtmlDocument html = new HtmlDocument();
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            var time = GetTimeRequest();
+            var request = (HttpWebRequest)WebRequest.Create($"{url}?_={time}");
 
             request.Method = "GET";
-            request.ContentType = "application/x-www-form-urlencoded";
             request.UserAgent = UserAgent;
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
-            request.Referer = "https://advant.club/search/hotels/";
-            request.Headers.Add("Upgrade-Insecure-Requests", "1");
+            request.Accept = "*/*";
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            request.Proxy = new WebProxy(proxy);
+            //request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -352,68 +350,52 @@ namespace Advant
                 StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
                 var kodPage = await responseReader.ReadToEndAsync();
 
+                HtmlDocument html = new HtmlDocument();
                 html.LoadHtml(kodPage);
 
                 return html;
             }
-            catch
+            catch (WebException e)
             {
+                Log(e.ToString());
                 return null;
             }
         }
 
-        public async Task<HtmlDocument> GetListCountry(string cookie, string proxy)
+        public async Task<HtmlDocument> GetPageTour(string url, string cookie, string proxy)
         {
-            HtmlDocument html = new HtmlDocument();
-            var request = (HttpWebRequest)WebRequest.Create($"https://advant.club/search/hotels/");
+            var request = (HttpWebRequest)WebRequest.Create($"https://advant.club{url}");
 
             request.Method = "GET";
-            request.ContentType = "application/x-www-form-urlencoded";
             request.UserAgent = UserAgent;
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
-            request.Referer = "https://advant.club/search/";
             request.Headers.Add("Upgrade-Insecure-Requests", "1");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            //request.Proxy = new WebProxy(proxy);
 
-            var response = await request.GetResponseAsync();
+            try
+            {
+                var response = await request.GetResponseAsync();
 
-            var stream = response.GetResponseStream();
-            StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
-            var kodPage = await responseReader.ReadToEndAsync();
+                var stream = response.GetResponseStream();
+                StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
+                var kodPage = await responseReader.ReadToEndAsync();
 
-            html.LoadHtml(kodPage);
+                HtmlDocument html = new HtmlDocument();
+                html.LoadHtml(kodPage);
 
-            return html;
-        }
-
-        public async Task<HtmlDocument> GetListHotels(string url, string cookie)
-        {
-            HtmlDocument html = new HtmlDocument();
-            var request = (HttpWebRequest)WebRequest.Create(url);
-
-            request.Method = "GET";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.UserAgent = UserAgent;
-            request.Accept = "*/*";
-            request.Referer = "https://advant.club/search/hotels/";
-            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
-            request.Headers.Add("Accept-Encoding", AcceptEncoding);
-            request.Headers.Add("Accept-Language", AcceptLanguage);
-            request.Headers.Add("Cookie", cookie);
-            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-
-            var response = await request.GetResponseAsync();
-
-            var stream = response.GetResponseStream();
-            StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
-            var kodPage = await responseReader.ReadToEndAsync();
-
-            html.LoadHtml(kodPage);
-
-            return html;
+                return html;
+            }
+            catch (WebException e)
+            {
+                Log(e.ToString());
+                return null;
+            }
         }
 
 

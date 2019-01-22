@@ -56,6 +56,7 @@ namespace Advant
             SystemLogging += WriteLogs;
 
             Proxy _proxy = new Proxy();
+            AdvantParse parse = new AdvantParse();
             string userAgent = GetUserAgent();
 
             _web = new AdvantWeb(userAgent, SystemLogging);
@@ -87,7 +88,7 @@ namespace Advant
 
             List<string> filters = await GetFilters(dataInput);
 
-            //TODO
+            //TODO async foreach
             foreach (var item in filters)
             {
                 string url = await _web.SendFilter(item, cookie, proxy);
@@ -175,31 +176,35 @@ namespace Advant
 
           //  string field1 = "&meal_types=all&price_from=0&price_till=100000";//price_budget=0-100000
             //string field2 = "&";
-            // string flagCountry = "ru";
+             //string flagCountry = "ru";
 
             try
             {
-              //  if (data.NameCountryFrom.Equals("Украина"))
-               //     flagCountry = "ua";
+                // if (data.NameCountryFrom.Equals("Украина"))
+                //    flagCountry = "ua";
 
-                string idCountry = await GetIdCountry(data.NameCountryTo);
+                string flagCountryFrom = data.NameCountryFrom.Equals("Украина") ? "ua" : "ru";
+                int addFromStar = data.NameCountryFrom.Equals("Украина") ? 0 : 399;
+
+                string idCountry = await GetIdCountry(flagCountryFrom, data.NameCountryTo);
 
                 string dateF = DateTime.Now.AddDays(data.StartDay).ToString("dd.MM.yyyy");
                 string dateT = DateTime.Now.AddDays(data.StartDay + data.CountDay - 1).ToString("dd.MM.yyyy");
+
+                
 
                 for (var nightCount = 6; nightCount <= 28; nightCount++)
                 {
                     for (var stars = 3; stars <= 5; stars++)
                     {
-                       // if (flagCountry.Equals("ua"))
-                       // {
-                        var url =
-                                            $"https://advant.club/ua/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightCount}&night_till={nightCount}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={stars}&meal_types=all&price_from=0&price_till=100000";
-                            listFilters.Add(url);
+                        addFromStar += stars;
+                      //   if (data.NameCountryFrom.Equals("Украина"))
+                      //  {           
+                        listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightCount}&night_till={nightCount}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={addFromStar}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
                                               
                         //    listFilters.Add("https://advant.club/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=1&child1_age=12&child2_age=0&child3_age=0&hotel_ratings=" + stars + fieldPrice);
                         //   listFilters.Add("https://advant.club/search/?country=" + idCountry + "&date_from=" + dateF + "&date_till=" + dateT + "&night_from=" + nightCount + "&night_till=" + nightCount + "&adult_amount=2&child_amount=1&child1_age=2&child2_age=0&child3_age=0&hotel_ratings=" + stars + fieldPrice);
-                        //}
+                       // }
                         //else
                         //{
                         //   // int tempStars = stars + 399;
@@ -220,13 +225,13 @@ namespace Advant
             return listFilters;
         }
 
-        private async Task<string> GetIdCountry(string nameCountry)
+        private async Task<string> GetIdCountry(string flagUrl, string nameCountry)
         {
             string  rez = "";
 
             try
             {
-                var html= await _web.GetStartPage(cookie, proxy);
+                var html= await _web.GetStartPage(flagUrl, cookie, proxy);
                 var listCountrys = html.DocumentNode.SelectNodes("//select[@id='id_country']/option");
                 var selectCountry = listCountrys.FirstOrDefault(x => x.InnerText.Contains(nameCountry));
                 rez = selectCountry.Attributes["value"].Value;

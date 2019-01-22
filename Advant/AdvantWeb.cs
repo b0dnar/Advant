@@ -182,11 +182,11 @@ namespace Advant
             }
         }
 
-        public async Task<HtmlDocument> GetStartPage(string cookie, string proxy)
+        public async Task<HtmlDocument> GetStartPage(string flag, string cookie, string proxy)
         {
             HtmlDocument html = new HtmlDocument();
 
-            var request = (HttpWebRequest)WebRequest.Create($"https://advant.club/ua/search/");
+            var request = (HttpWebRequest)WebRequest.Create($"https://advant.club/{flag}/search/");
 
             request.Method = "GET";
             request.UserAgent = UserAgent;

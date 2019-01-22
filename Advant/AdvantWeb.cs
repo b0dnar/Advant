@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 using HtmlAgilityPack;
+using Newtonsoft.Json.Linq;
 
 namespace Advant
 {
@@ -44,7 +45,7 @@ namespace Advant
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            request.Proxy = new WebProxy(proxy);
+            //    request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -53,7 +54,7 @@ namespace Advant
 
                 return resCookie;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;
@@ -81,7 +82,7 @@ namespace Advant
             request.Headers.Add("Cookie", cookie);
             request.UseDefaultCredentials = false;
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            request.Proxy = new WebProxy(proxy);
+            //  request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -120,7 +121,7 @@ namespace Advant
             var request = (HttpWebRequest)WebRequest.Create($"https://advant.club/search/departure-city/show/?_={time}");
 
             request.Method = "GET";
-                //request.ContentType = ContentType;
+            request.ContentType = ContentType;
             request.UserAgent = UserAgent;
             request.Accept = "*/*";
             request.Referer = "https://advant.club/search";
@@ -129,8 +130,9 @@ namespace Advant
             request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
+            request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            request.Proxy = new WebProxy(proxy);
+            //request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -144,16 +146,184 @@ namespace Advant
 
                 return html;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;
             }
         }
 
+        public async Task SetCity(string url, string cookie, string proxy)
+        {
+            var time = GetTimeRequest();
 
+            var request = (HttpWebRequest)WebRequest.Create($"https://advant.club{url}?_={time}");
 
+            request.Method = "GET";
+            request.UserAgent = UserAgent;
+            request.Accept = "*/*";
+            request.Referer = "https://advant.club/search";
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
+            request.Headers.Add("Accept-Encoding", AcceptEncoding);
+            request.Headers.Add("Accept-Language", AcceptLanguage);
+            request.Headers.Add("Cookie", cookie);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            //request.Proxy = new WebProxy(proxy);
 
+            try
+            {
+                var response = await request.GetResponseAsync();
+            }
+            catch (Exception e)
+            {
+                Log(e.ToString());
+            }
+        }
+
+        public async Task<HtmlDocument> GetStartPage(string cookie, string proxy)
+        {
+            HtmlDocument html = new HtmlDocument();
+
+            var request = (HttpWebRequest)WebRequest.Create($"https://advant.club/ua/search/");
+
+            request.Method = "GET";
+            request.UserAgent = UserAgent;
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
+            request.Headers.Add("Upgrade-Insecure-Requests", "1");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
+            request.Headers.Add("Accept-Encoding", AcceptEncoding);
+            request.Headers.Add("Accept-Language", AcceptLanguage);
+            request.Headers.Add("Cookie", cookie);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            //request.Proxy = new WebProxy(proxy);
+
+            try
+            {
+                var response = await request.GetResponseAsync();
+
+                var stream = response.GetResponseStream();
+                StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
+                var kodPage = await responseReader.ReadToEndAsync();
+
+                html.LoadHtml(kodPage);
+
+                return html;
+            }
+            catch (Exception e)
+            {
+                Log(e.ToString());
+                return null;
+            }
+        }
+
+        public async Task<string> SendFilter(string filter, string cookie, string proxy)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(filter);
+
+            request.Method = "GET";
+            request.UserAgent = UserAgent;
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
+            request.Headers.Add("Upgrade-Insecure-Requests", "1");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
+            request.Referer = "https://advant.club/search/";
+            request.Headers.Add("Accept-Encoding", AcceptEncoding);
+            request.Headers.Add("Accept-Language", AcceptLanguage);
+            request.Headers.Add("Cookie", cookie);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            //request.Proxy = new WebProxy(proxy);
+
+            try
+            {
+                var response = await request.GetResponseAsync();
+                string newUrl = response.ResponseUri.AbsoluteUri;
+
+                return newUrl;
+            }
+            catch (WebException e)
+            {
+                Log(e.ToString());
+                return null;
+            }
+        }
+
+        public async Task<JToken> LoadHotels(string url, string cookie, string proxy)
+        {
+            var time = GetTimeRequest();
+            var request = (HttpWebRequest)WebRequest.Create($"{url}load/state/?tours=0&hotels=0&_={time}");
+
+            request.Method = "GET";
+            request.UserAgent = UserAgent;
+            request.Accept = "application/json, text/javascript, */*; q=0.01";
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
+            request.Referer = url;
+            request.Headers.Add("Accept-Encoding", AcceptEncoding);
+            request.Headers.Add("Accept-Language", AcceptLanguage);
+            request.Headers.Add("Cookie", cookie);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            //request.Proxy = new WebProxy(proxy);
+
+            try
+            {
+                var response = await request.GetResponseAsync();
+
+                var stream = response.GetResponseStream();
+                StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
+                var kodPage = await responseReader.ReadToEndAsync();
+
+                var json = JObject.Parse(kodPage);
+
+                return json;
+            }
+            catch (WebException e)
+            {
+                Log(e.ToString());
+                return null;
+            }
+        }
+
+        public async Task<HtmlDocument> GetHotels(string url, string cookie, string proxy)
+        {
+            var time = GetTimeRequest();
+            var request = (HttpWebRequest)WebRequest.Create($"{url}results/?_={time}");
+
+            request.Method = "GET";
+            request.UserAgent = UserAgent;
+            request.Accept = "*/*";
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            request.Headers.Add("Host", "advant.club");
+            request.KeepAlive = true;
+            request.Referer = url;
+            request.Headers.Add("Accept-Encoding", AcceptEncoding);
+            request.Headers.Add("Accept-Language", AcceptLanguage);
+            request.Headers.Add("Cookie", cookie);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            //request.Proxy = new WebProxy(proxy);
+
+            try
+            {
+                var response = await request.GetResponseAsync();
+
+                var stream = response.GetResponseStream();
+                StreamReader responseReader = new StreamReader(stream, Encoding.UTF8);
+                var kodPage = await responseReader.ReadToEndAsync();
+
+                HtmlDocument html = new HtmlDocument();
+                html.LoadHtml(kodPage);
+
+                return html;
+            }
+            catch (WebException e)
+            {
+                Log(e.ToString());
+                return null;
+            }
+        }
 
 
 

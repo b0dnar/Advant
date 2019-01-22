@@ -11,6 +11,8 @@ namespace Advant
         public string NameCountryFrom { get; set; }
         public string NameCityFrom { get; set; }
         public string NameCountryTo { get; set; }
+        public int StartDay { get; set; }
+        public int CountDay { get; set; }
         public int TimeSleep { get; set; }
     }
 }

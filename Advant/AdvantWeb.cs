@@ -243,7 +243,7 @@ namespace Advant
 
                 return newUrl;
             }
-            catch (WebException e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;
@@ -280,7 +280,7 @@ namespace Advant
 
                 return json;
             }
-            catch (WebException e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;
@@ -318,7 +318,7 @@ namespace Advant
 
                 return html;
             }
-            catch (WebException e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;
@@ -355,7 +355,7 @@ namespace Advant
 
                 return html;
             }
-            catch (WebException e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;
@@ -391,7 +391,7 @@ namespace Advant
 
                 return html;
             }
-            catch (WebException e)
+            catch (Exception e)
             {
                 Log(e.ToString());
                 return null;

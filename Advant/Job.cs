@@ -53,67 +53,81 @@ namespace Advant
 
         public async Task Run(DataInput dataInput)
         {
-            SystemLogging += WriteLogs;
-
-            Proxy _proxy = new Proxy();
-            string userAgent = GetUserAgent();
-
-            _web = new AdvantWeb(userAgent, SystemLogging);
-
-            proxy = "";
-            //            proxy = await _proxy.SearchProxy();
-            if (proxy == null)
+            try
             {
-                SystemLogging("Проксі не знайдено");
-                return;
-            }
+                SystemLogging += WriteLogs;
 
-            cookie = await _web.GetCookie(proxy);
-            if (cookie == null)
-            {
-                SystemLogging("Кукі не отримано");
-                return;
-            }
+                Proxy _proxy = new Proxy();
+                string userAgent = GetUserAgent();
 
-            cookie = await _web.GetSessionId(cookie, proxy, dataInput.Login, dataInput.Password);
-            if (cookie == null)
-            {
-                SystemLogging("Помилка при авторизації");
-                return;
-            }
+                _web = new AdvantWeb(userAgent, SystemLogging);
 
-            await SetCityFrom(dataInput.NameCityFrom);
-            List<string> filters = await GetFilters(dataInput);
-
-            AdvantParse parse = new AdvantParse(_web, cookie, proxy);
-            List<DataOutput> allData = new List<DataOutput>();
-
-            //TODO async foreach
-            foreach (var item in filters)
-            {
-                string url = await _web.SendFilter(item, cookie, proxy);
-
-                bool noLoadHotels = true;
-                while (noLoadHotels)
+                proxy = "";
+                //            proxy = await _proxy.SearchProxy();
+                if (proxy == null)
                 {
-                    var jObj = await _web.LoadHotels(url, cookie, proxy);
-                    var percent = (int)jObj["percent"];
-                    if (percent == 100)
-                    {
-                        noLoadHotels = false;
-                    }
+                    SystemLogging("Проксі не знайдено");
+                    return;
                 }
 
+                cookie = await _web.GetCookie(proxy);
+                if (cookie == null)
+                {
+                    SystemLogging("Кукі не отримано");
+                    return;
+                }
 
-                await parse.ParseHotel(url);
+                cookie = await _web.GetSessionId(cookie, proxy, dataInput.Login, dataInput.Password);
+                if (cookie == null)
+                {
+                    SystemLogging("Помилка при авторизації");
+                    return;
+                }
+
+                await SetCityFrom(dataInput.NameCityFrom);
+                List<string> filters = await GetFilters(dataInput);
+
+                AdvantParse parse = new AdvantParse(_web, dataInput.NameCountryFrom, cookie, proxy);
+                List<DataOutput> allData = new List<DataOutput>();
+
+                //TODO async foreach
+                foreach (var item in filters)
+                {
+                    string url = await _web.SendFilter(item, cookie, proxy);
+
+                    if (url == null)
+                    {
+                        continue;
+                    }
+
+                    bool noLoadHotels = true;
+                    while (noLoadHotels)
+                    {
+                        var jObj = await _web.LoadHotels(url, cookie, proxy);
+
+                        if (jObj == null)
+                        {
+                            break;
+                        }
+
+                        var percent = (int)jObj["percent"];
+                        if (percent == 100)
+                        {
+                            noLoadHotels = false;
+                        }
+                    }
 
 
+                    var datas = await parse.ParseHotel(url);
 
-                //var dataFromFilter = 
-                //allData.AddRange(dataFromFilter);
-
+                    allData.AddRange(datas);
+                }
+            }
+            catch(Exception e)
+            {
 
             }
+            
         }
 
         private string GetUserAgent()
@@ -195,9 +209,10 @@ namespace Advant
                 {
                     for (var stars = 3; stars <= 5; stars++)
                     {
-                        addFromStar += stars;
+                        var st = addFromStar + stars;
 
-                        listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightCount}&night_till={nightCount}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={addFromStar}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
+                        listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightCount}&night_till={nightCount}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={st}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
+                        
                     }
                 }
             }

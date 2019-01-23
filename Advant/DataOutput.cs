@@ -21,14 +21,12 @@ namespace Advant
         public string CountStart { get; set; }
         public string CountNight { get; set; }
         public string Food { get; set; }
-        public string FoodBig { get; set; }
         public string TypeRoom { get; set; }
-        public string TypeRoomBig { get; set; }
         public string Operator { get; set; }
         public string Price { get; set; }
-        public string UrlFoto { get; set; }
-        public string UrlDetails { get; set; }
-        public string UrlOperator { get; set; }
+        //public string UrlFoto { get; set; }
+        //public string UrlDetails { get; set; }
+        public string UrlTour { get; set; }
         public string DetailsHotel { get; set; }
     }
 }

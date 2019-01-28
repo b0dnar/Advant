@@ -4,8 +4,8 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
-using System.Text.RegularExpressions;
+using System.Text;
+
 
 namespace Advant
 {
@@ -25,27 +25,21 @@ namespace Advant
         {
             DataInput data = new DataInput();
 
-            try
-            {
-                string path = Directory.GetCurrentDirectory();
+            string path = Directory.GetCurrentDirectory();
 
-                using (var reader = new StreamReader(path + @"/config.json"))
-                {
-                    string str = reader.ReadToEnd();
-                    var obj = JObject.Parse(str);
-
-                    data.Login = obj["Login"].ToString();
-                    data.Password = obj["Password"].ToString();
-                    data.NameCountryFrom = obj["CountryFrom"].ToString();
-                    data.NameCityFrom = obj["CityFrom"].ToString();
-                    data.NameCountryTo = obj["CountryTo"].ToString();
-                    data.StartDay = (int)obj["StartDay"];
-                    data.CountDay = (int)obj["CountDay"];
-                    data.TimeSleep = (int)(obj["TimeSleep"]);
-                }
-            }
-            catch (Exception e)
+            using (var reader = new StreamReader(path + @"/config.json"))
             {
+                string str = reader.ReadToEnd();
+                var obj = JObject.Parse(str);
+
+                data.Login = obj["Login"].ToString();
+                data.Password = obj["Password"].ToString();
+                data.NameCountryFrom = obj["CountryFrom"].ToString();
+                data.NameCityFrom = obj["CityFrom"].ToString();
+                data.NameCountryTo = obj["CountryTo"].ToString();
+                data.StartDay = (int)obj["StartDay"];
+                data.CountDay = (int)obj["CountDay"];
+                data.TimeSleep = (int)(obj["TimeSleep"]);
             }
 
             return data;
@@ -57,18 +51,19 @@ namespace Advant
             {
                 SystemLogging += WriteLogs;
 
+                SystemLogging("Старт нового кола парсингу");
                 Proxy _proxy = new Proxy();
                 string userAgent = GetUserAgent();
 
                 _web = new AdvantWeb(userAgent, SystemLogging);
 
-                proxy = "";
-                //            proxy = await _proxy.SearchProxy();
+                proxy = await _proxy.SearchProxy();
                 if (proxy == null)
                 {
                     SystemLogging("Проксі не знайдено");
                     return;
                 }
+                SystemLogging($"Проксі - {proxy}");
 
                 cookie = await _web.GetCookie(proxy);
                 if (cookie == null)
@@ -83,6 +78,7 @@ namespace Advant
                     SystemLogging("Помилка при авторизації");
                     return;
                 }
+                SystemLogging($"Кукі - {cookie}");
 
                 await SetCityFrom(dataInput.NameCityFrom);
                 List<string> filters = await GetFilters(dataInput);
@@ -90,7 +86,9 @@ namespace Advant
                 AdvantParse parse = new AdvantParse(_web, dataInput.NameCountryFrom, cookie, proxy);
                 List<DataOutput> allData = new List<DataOutput>();
 
+                SystemLogging($"Всього {filters.Count} фільтрів");
                 //TODO async foreach
+                var count = 1;
                 foreach (var item in filters)
                 {
                     string url = await _web.SendFilter(item, cookie, proxy);
@@ -120,14 +118,22 @@ namespace Advant
 
                     var datas = await parse.ParseHotel(url);
 
-                    allData.AddRange(datas);
+                    lock (allData)
+                    {
+                        allData.AddRange(datas);
+                    }
+
+                    SystemLogging($"Парсинг {count} фільтрів завершено");
+                    count++;
                 }
+
+                Save(allData);
+                SystemLogging("Файл записано!");
             }
-            catch(Exception e)
+            catch
             {
 
             }
-            
         }
 
         private string GetUserAgent()
@@ -198,22 +204,27 @@ namespace Advant
             try
             {
                 string flagCountryFrom = data.NameCountryFrom.Equals("Украина") ? "ua" : "ru";
-                int addFromStar = data.NameCountryFrom.Equals("Украина") ? 0 : 399;
+                int addFromStar = data.NameCountryFrom.Equals("Украина") ? 3 : 402;
 
                 string idCountry = await GetIdCountry(flagCountryFrom, data.NameCountryTo);
 
                 string dateF = DateTime.Now.AddDays(data.StartDay).ToString("dd.MM.yyyy");
                 string dateT = DateTime.Now.AddDays(data.StartDay + data.CountDay - 1).ToString("dd.MM.yyyy");
 
-                for (var nightCount = 6; nightCount <= 28; nightCount++)
+                for (var nightFrom = 6; nightFrom <= 21; nightFrom++)
                 {
-                    for (var stars = 3; stars <= 5; stars++)
-                    {
-                        var st = addFromStar + stars;
+                    // for (var stars = 3; stars < 5; stars++)
+                    // {
+                    var stars1 = addFromStar;
+                    var stars2 = stars1 + 1;
+                    var stars3 = stars2 + 1;
+                    var nightTo = nightFrom + 7;
 
-                        listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightCount}&night_till={nightCount}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={st}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
-                        
-                    }
+
+                    listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightFrom}&night_till={nightTo}&adult_amount=2&child_amount=0&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={stars1}&hotel_ratings={stars2}&hotel_ratings={stars3}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
+                    listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightFrom}&night_till={nightTo}&adult_amount=2&child_amount=1&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={stars1}&hotel_ratings={stars2}&hotel_ratings={stars3}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
+                    listFilters.Add($"https://advant.club/{flagCountryFrom}/search/?country={idCountry}&date_from={dateF}&date_till={dateT}&night_from={nightFrom}&night_till={nightTo}&adult_amount=2&child_amount=2&child1_age=12&child2_age=1&child3_age=1&hotel_ratings={stars1}&hotel_ratings={stars2}&hotel_ratings={stars3}&meal_types=all&price_budget=0-1000000&price_from=0&price_till=100000");
+                    // }
                 }
             }
             catch (Exception e)
@@ -237,7 +248,7 @@ namespace Advant
                 var selectCountry = listCountrys.FirstOrDefault(x => x.InnerText.Contains(nameCountry));
                 rez = selectCountry.Attributes["value"].Value;
             }
-            catch (Exception e)
+            catch
             {
                 // ConfigurationFile.WriteLog("Error in search id country for name\n" + e.ToString());
             }
@@ -257,5 +268,41 @@ namespace Advant
                 wr.WriteLine(data + log);
             }
         }
+
+
+        public static void Save(List<DataOutput> list)
+        {
+            string header = "INSERT INTO `proposal` (`id`, `countryFrom`, `countryWhere`, `cityFrom`, `cityWhere`, `adults`, `children`, `hotelName`, `hotelRate`, `hotelDateFrom`, `hotelNights`, `hotelFood`, `hotelRoom`, `hotelPrice`, `operatorName`) VALUES";
+            Random r = new Random();
+
+            int count = 1;
+            string path = Directory.GetCurrentDirectory();
+
+            var time = DateTime.Now.ToString("HH_mm");
+            using (StreamWriter sw = new StreamWriter($"{path}/database_{time}.sql"))
+            {
+                try
+                {
+                    sw.WriteLine(header);
+
+                    foreach (var d in list)
+                    {
+                        StringBuilder str = new StringBuilder();
+
+                        str.AppendFormat("('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}'),", count, d.CountryFrom, d.CountryTo, d.CityFrom, d.CityTo, d.CountAdults, d.CountChildren, d.NameHotel, d.CountStart, d.DataFrom, d.CountNight, d.Food, d.TypeRoom, d.Price, 0, d.Operator);
+
+                        if (count++ == list.Count)
+                            str.Replace("),", ");");
+
+                        sw.WriteLine(str.ToString());
+                    }
+                }
+                catch
+                {
+                    //WriteLog("Error in Write Data to file\n" + e.ToString());
+                }
+            }
+        }
+
     }
 }

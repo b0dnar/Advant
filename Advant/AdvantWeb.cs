@@ -45,7 +45,7 @@ namespace Advant
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //    request.Proxy = new WebProxy(proxy);
+            //request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -82,7 +82,7 @@ namespace Advant
             request.Headers.Add("Cookie", cookie);
             request.UseDefaultCredentials = false;
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //  request.Proxy = new WebProxy(proxy);
+            //request.Proxy = new WebProxy(proxy);
 
             try
             {

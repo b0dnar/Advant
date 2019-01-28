@@ -64,31 +64,38 @@ namespace Advant
 
         private List<string> GetUrlHotels(HtmlDocument html)
         {
-            var collectHref = html.DocumentNode.SelectNodes("//div[@class='col-12 col-md-3 col-lg-4 col-xl-3 bl-list__button-hor']");
-            var listUrls = collectHref.Select(x => x.SelectSingleNode(".//a").Attributes["href"].Value.Replace("#", "https://advant.club").Replace("?show_filter=1", "")).ToList();
+            try
+            {
+                var collectHref = html.DocumentNode.SelectNodes("//div[@class='col-12 col-md-3 col-lg-4 col-xl-3 bl-list__button-hor']");
+                var listUrls = collectHref.Select(x => x.SelectSingleNode(".//a").Attributes["href"].Value.Replace("#", "https://advant.club").Replace("?show_filter=1", "")).ToList();
 
-            return listUrls;
+                return listUrls;
+            }
+            catch 
+            {
+                return null;
+            }
+           
         }
 
         private List<string> GetUrlTours(HtmlDocument html)
         {
-            var collect = html.DocumentNode.SelectNodes("//a[@target='_blank']");
-            var list = collect.Select(x => x.Attributes["href"].Value).ToList();
+            try
+            {
+                var collect = html.DocumentNode.SelectNodes("//a[@target='_blank']");
+                var list = collect.Select(x => x.Attributes["href"].Value).ToList();
 
-            return list;
+                return list;
+            }
+            catch
+            {
+                return null;
+            }
+           
 
-            //var hashSet = new HashSet<string>(list);
-            //var delEl = hashSet.Where(x =>  x == "&").Select(x => x).ToList();
+            
 
-            //if(delEl.Count == 0)
-            //{
-            //    return hashSet.ToList();
-            //}
-            //else
-            //{
-            //    var listRez = hashSet.Where(x => !delEl.Contains(x)).Select(x => x).ToList();
-            //    return listRez;
-            //}
+           
         }
 
         private DataOutput FillingData(HtmlDocument html, string r)
@@ -162,17 +169,10 @@ namespace Advant
 
                 return data;
             }
-            catch(Exception e)
+            catch
             {
                 return null;
             }
         }
-
-        //private void SetFromInputData(ref DataOutput output)
-        //{
-        //    output.CountryFrom = InputData.NameCountryFrom;
-        //    output.CountryTo = InputData.NameCountryTo;
-        //    output. = InputData.NameCountryFrom;
-        //}
     }
 }

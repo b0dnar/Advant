@@ -11,16 +11,6 @@ namespace Advant
 {
     public class Job
     {
-        public delegate void WriteToFile(string str);
-
-        public static WriteToFile SystemLogging;
-        public WriteToFile WriteData;
-
-
-        private AdvantWeb _web;
-        private string cookie;
-        private string proxy;
-
         public DataInput ParseInputFile()
         {
             DataInput data = new DataInput();
@@ -47,65 +37,86 @@ namespace Advant
 
         public async Task Run(DataInput dataInput)
         {
+            Write.Logs("Старт нового кола парсингу");
+            Proxy _proxy = new Proxy();
+            string userAgent = GetUserAgent();
+            string cookie, proxy;
+            AdvantWeb _web = new AdvantWeb(userAgent);
+            SendData sendData;
+
             try
             {
-                SystemLogging += WriteLogs;
-
-                SystemLogging("Старт нового кола парсингу");
-                Proxy _proxy = new Proxy();
-                string userAgent = GetUserAgent();
-
-                _web = new AdvantWeb(userAgent, SystemLogging);
-
-                proxy = await _proxy.SearchProxy();
-                if (proxy == null)
-                {
-                    SystemLogging("Проксі не знайдено");
-                    return;
-                }
-                SystemLogging($"Проксі - {proxy}");
+                proxy = "";//await _proxy.SearchProxy();
+                           /*   if (proxy == null)
+                              {
+                                  Write.Logs("Проксі не знайдено");
+                                  return;
+                              }
+                              Write.Logs($"Проксі - {proxy}");
+                              */
 
                 cookie = await _web.GetCookie(proxy);
                 if (cookie == null)
                 {
-                    SystemLogging("Кукі не отримано");
+                    Write.Logs("Кукі не отримано");
                     return;
                 }
 
                 cookie = await _web.GetSessionId(cookie, proxy, dataInput.Login, dataInput.Password);
                 if (cookie == null)
                 {
-                    SystemLogging("Помилка при авторизації");
+                    Write.Logs("Помилка при авторизації");
                     return;
                 }
-                SystemLogging($"Кукі - {cookie}");
+                Write.Logs($"Кукі - {cookie}");
 
-                await SetCityFrom(dataInput.NameCityFrom);
-                List<string> filters = await GetFilters(dataInput);
+                sendData = new SendData(_web, cookie, proxy);
 
-                AdvantParse parse = new AdvantParse(_web, dataInput.NameCountryFrom, cookie, proxy);
+                var stateSetCity = await SetCityFrom(dataInput.NameCityFrom, sendData);
+                if (!stateSetCity)
+                {
+                    Write.Logs("Не встановлено місто вильоту");
+                    return;
+                }
+
+
+                List<string> filters = await GetFilters(dataInput, sendData);
+                if (filters == null)
+                {
+                    Write.Logs("Не отримано ід міста вильоту");
+                    return;
+                }
+
+                AdvantParse parse = new AdvantParse(sendData, dataInput.NameCountryFrom);
                 List<DataOutput> allData = new List<DataOutput>();
 
-                SystemLogging($"Всього {filters.Count} фільтрів");
+                Write.Logs($"Всього {filters.Count} фільтрів");
+                
                 //TODO async foreach
                 var count = 1;
                 foreach (var item in filters)
                 {
-                    string url = await _web.SendFilter(item, cookie, proxy);
+                    var url = await _web.SendFilter(item, cookie, proxy);
 
                     if (url == null)
                     {
                         continue;
                     }
 
+                    int countRequest = 0, maxRequest = 5;
                     bool noLoadHotels = true;
                     while (noLoadHotels)
                     {
-                        var jObj = await _web.LoadHotels(url, cookie, proxy);
-
-                        if (jObj == null)
+                        if (countRequest == maxRequest)
                         {
                             break;
+                        }
+                        var jObj = await _web.LoadHotels(url, cookie, proxy);
+
+                        if (jObj == null || !jObj.ToString().Contains("percent"))
+                        {
+                            countRequest++;
+                            continue;
                         }
 
                         var percent = (int)jObj["percent"];
@@ -115,24 +126,33 @@ namespace Advant
                         }
                     }
 
+                    if (noLoadHotels)
+                    {
+                        continue;
+                    }
 
                     var datas = await parse.ParseHotel(url);
+                    if (datas == null)
+                    {
+                        continue;
+                    }
 
                     lock (allData)
                     {
                         allData.AddRange(datas);
                     }
 
-                    SystemLogging($"Парсинг {count} фільтрів завершено");
+                    Write.Logs($"Парсинг {count} фільтрів завершено");
                     count++;
                 }
 
-                Save(allData);
-                SystemLogging("Файл записано!");
+                Write.Result(allData);
+                Write.Logs("Файл записано!");
             }
-            catch
+            catch (Exception ex)
             {
-
+                Write.Logs("Помилка в головному потоку");
+                Write.Logs(ex.ToString());
             }
         }
 
@@ -179,25 +199,33 @@ namespace Advant
             return agent;
         }
 
-
-
-
-        private async Task SetCityFrom(string nameCountryFrom)
+        private async Task<bool> SetCityFrom(string nameCountryFrom, SendData sData)
         {
-            var html = await _web.GetListCity(cookie, proxy);
-            var elements = html.DocumentNode.SelectNodes("//li[@class='fz16']");
-            var elemUrl = elements.FirstOrDefault(x => x.InnerText.Contains(nameCountryFrom));
-
-            if (elemUrl.ChildNodes[1].Name == "a")
+            try
             {
-                var urlCity = elemUrl.SelectSingleNode(".//a").Attributes["href"].Value;
+                var html = await sData.Web.GetListCity(sData.Cookie, sData.Proxy);
+                var elements = html.DocumentNode.SelectNodes("//li[@class='fz16']");
+                var elemUrl = elements.FirstOrDefault(x => x.InnerText.Contains(nameCountryFrom));
 
-                await _web.SetCity(urlCity, cookie, proxy);
+                if (elemUrl.ChildNodes[1].Name == "a")
+                {
+                    var urlCity = elemUrl.SelectSingleNode(".//a").Attributes["href"].Value;
+
+                    await sData.Web.SetCity(urlCity, sData.Cookie, sData.Proxy);
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Write.Logs("Помилка Встановленні міста вильоту");
+                Write.Logs(e.ToString());
+
+                return false;
             }
         }
 
-
-        private async Task<List<string>> GetFilters(DataInput data)
+        private async Task<List<string>> GetFilters(DataInput data, SendData sData)
         {
             List<string> listFilters = new List<string>();
 
@@ -206,7 +234,11 @@ namespace Advant
                 string flagCountryFrom = data.NameCountryFrom.Equals("Украина") ? "ua" : "ru";
                 int addFromStar = data.NameCountryFrom.Equals("Украина") ? 3 : 402;
 
-                string idCountry = await GetIdCountry(flagCountryFrom, data.NameCountryTo);
+                string idCountry = await GetIdCountry(flagCountryFrom, data.NameCountryTo, sData);
+                if (idCountry == null)
+                {
+                    return null;
+                }
 
                 string dateF = DateTime.Now.AddDays(data.StartDay).ToString("dd.MM.yyyy");
                 string dateT = DateTime.Now.AddDays(data.StartDay + data.CountDay - 1).ToString("dd.MM.yyyy");
@@ -230,79 +262,31 @@ namespace Advant
             catch (Exception e)
             {
                 string log = String.Format("Error!!!\nFilters is not create.{0}", e.ToString());
-                WriteLogs(log);
+                Write.Logs(log);
                 return null;
             }
 
             return listFilters;
         }
 
-        private async Task<string> GetIdCountry(string flagUrl, string nameCountry)
+        private async Task<string> GetIdCountry(string flagUrl, string nameCountry, SendData sData)
         {
-            string rez = "";
-
             try
             {
-                var html = await _web.GetStartPage(flagUrl, cookie, proxy);
+                var html = await sData.Web.GetStartPage(flagUrl, sData.Cookie, sData.Proxy);
                 var listCountrys = html.DocumentNode.SelectNodes("//select[@id='id_country']/option");
                 var selectCountry = listCountrys.FirstOrDefault(x => x.InnerText.Contains(nameCountry));
-                rez = selectCountry.Attributes["value"].Value;
+                var rez = selectCountry.Attributes["value"].Value;
+
+                return rez;
             }
-            catch
+            catch (Exception ex)
             {
-                // ConfigurationFile.WriteLog("Error in search id country for name\n" + e.ToString());
-            }
+                Write.Logs("Помилка при отриманні ід міста");
+                Write.Logs(ex.ToString());
 
-            return rez;
-        }
-
-
-
-        private void WriteLogs(string log)
-        {
-            string path = Directory.GetCurrentDirectory();
-
-            using (var wr = new StreamWriter(path + @"/log.txt", true))
-            {
-                string data = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + " -  ";
-                wr.WriteLine(data + log);
+                return null;
             }
         }
-
-
-        public static void Save(List<DataOutput> list)
-        {
-            string header = "INSERT INTO `proposal` (`id`, `countryFrom`, `countryWhere`, `cityFrom`, `cityWhere`, `adults`, `children`, `hotelName`, `hotelRate`, `hotelDateFrom`, `hotelNights`, `hotelFood`, `hotelRoom`, `hotelPrice`, `operatorName`) VALUES";
-            Random r = new Random();
-
-            int count = 1;
-            string path = Directory.GetCurrentDirectory();
-
-            var time = DateTime.Now.ToString("HH_mm");
-            using (StreamWriter sw = new StreamWriter($"{path}/database_{time}.sql"))
-            {
-                try
-                {
-                    sw.WriteLine(header);
-
-                    foreach (var d in list)
-                    {
-                        StringBuilder str = new StringBuilder();
-
-                        str.AppendFormat("('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}'),", count, d.CountryFrom, d.CountryTo, d.CityFrom, d.CityTo, d.CountAdults, d.CountChildren, d.NameHotel, d.CountStart, d.DataFrom, d.CountNight, d.Food, d.TypeRoom, d.Price, 0, d.Operator);
-
-                        if (count++ == list.Count)
-                            str.Replace("),", ");");
-
-                        sw.WriteLine(str.ToString());
-                    }
-                }
-                catch
-                {
-                    //WriteLog("Error in Write Data to file\n" + e.ToString());
-                }
-            }
-        }
-
     }
 }

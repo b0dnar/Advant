@@ -15,18 +15,16 @@ namespace Advant
         private string AcceptLanguage { set; get; }
         private string AcceptEncoding { get; set; }
         private string ContentType { get; set; }
-        private Job.WriteToFile Log;
 
         Regex regTokenVal = new Regex(@"csrftoken=(?<val>.*?);");
         Regex regSessId = new Regex(@"sessionid=.*?;");
 
-        public AdvantWeb(string agent, Job.WriteToFile logging)
+        public AdvantWeb(string agent)
         {
             UserAgent = agent;
             AcceptLanguage = "uk-UA,uk;q=0.9,ru;q=0.8,en-US;q=0.7,en;q=0.6";
             AcceptEncoding = "gzip, deflate, br";
             ContentType = "application/x-www-form-urlencoded";
-            Log = logging;
         }
 
         public async Task<string> GetCookie(string proxy)
@@ -45,7 +43,7 @@ namespace Advant
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+           // request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -56,7 +54,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при отриманні куку");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -82,7 +81,7 @@ namespace Advant
             request.Headers.Add("Cookie", cookie);
             request.UseDefaultCredentials = false;
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+      //      request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -103,7 +102,8 @@ namespace Advant
                 }
                 else
                 {
-                    Log(e.ToString());
+                    Write.Logs("Помилка при отриманні ІД сесії");
+                    Write.Logs(e.ToString());
                     return null;
                 }
             }
@@ -132,7 +132,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+        //    request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -148,7 +148,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при отриманні списку міст вильоту");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -170,7 +171,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+        //    request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -178,7 +179,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при встановленні міста вильоту");
+                Write.Logs(e.ToString());
             }
         }
 
@@ -198,7 +200,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+       //     request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -214,7 +216,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при загрузці стартової сторінки");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -234,7 +237,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+        //    request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -245,7 +248,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при відправці фільтра пошуку");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -266,7 +270,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+        //    request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -282,7 +286,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при отриманні списку готелів");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -303,7 +308,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+       //     request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -320,7 +325,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при загрузці даних готелю");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -340,7 +346,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+         //   request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -357,7 +363,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при отриманні даних турів");
+                Write.Logs(e.ToString());
                 return null;
             }
         }
@@ -376,7 +383,7 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            //request.Proxy = new WebProxy(proxy);
+        //    request.Proxy = new WebProxy(proxy);
 
             try
             {
@@ -393,7 +400,8 @@ namespace Advant
             }
             catch (Exception e)
             {
-                Log(e.ToString());
+                Write.Logs("Помилка при отриманні даних по конкретному туру");
+                Write.Logs(e.ToString());
                 return null;
             }
         }

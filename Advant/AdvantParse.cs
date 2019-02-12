@@ -9,19 +9,19 @@ namespace Advant
 {
     public class AdvantParse
     {
-        private Regex regNum = new Regex(@"\d");
+        private Regex regNum = new Regex(@"\d+");
         private AdvantWeb _web;
         private string CountryFrom { get; set; }
         private string Cookie { get; set; }
         private string Proxy { get; set; }
         
 
-        public AdvantParse(AdvantWeb web, string nameCountryFrom, string cookie, string proxy)
+        public AdvantParse(SendData sData, string nameCountryFrom)
         {
-            _web = web;
+            _web = sData.Web;
+            Cookie = sData.Cookie;
+            Proxy = sData.Proxy;
             CountryFrom = nameCountryFrom;
-            Cookie = cookie;
-            Proxy = proxy;
         }
 
 
@@ -30,33 +30,65 @@ namespace Advant
             List<DataOutput> datasTours = new List<DataOutput>();
             List<string> urlsTour = new List<string>();
 
-            var htmlHotels = await _web.GetHotels(urlFilter, Cookie, Proxy);
-            var urlHotels = GetUrlHotels(htmlHotels);
-
-            if(urlHotels == null)
+            try
             {
-                return datasTours;
-            }
-
-            foreach (var url in urlHotels)
-            {
-                var htmlTour = await _web.GetTours(url, Cookie, Proxy);
-                var urls = GetUrlTours(htmlTour);
-                urlsTour.AddRange(urls);
-            }
-
-            foreach (var url in urlsTour)
-            {
-                var htmlTour = await _web.GetPageTour(url, Cookie, Proxy);
-                var data = FillingData(htmlTour, url);
-
-                if(data != null)
+                var htmlHotels = await _web.GetHotels(urlFilter, Cookie, Proxy);
+                if (htmlHotels == null)
                 {
-                    data.UrlTour = $"https://advant.club{url}";
-                    data.CountryFrom = CountryFrom;
-
-                    datasTours.Add(data);
+                    Write.Logs("Не отримано дані готелів");
+                    return null;
                 }
+
+                var urlHotels = GetUrlHotels(htmlHotels);
+
+                if (urlHotels == null)
+                {
+                    Write.Logs("Не має ссилок на готелі");
+                    return null;
+                }
+
+                foreach (var url in urlHotels)
+                {
+                    var htmlTour = await _web.GetTours(url, Cookie, Proxy);
+                    if (htmlTour == null)
+                    {
+                        Write.Logs("Не отримано дані по туру");
+                        continue;
+                    }
+
+                    var urls = GetUrlTours(htmlTour);
+                    if (htmlTour == null)
+                    {
+                        Write.Logs("Не має ссилок на тури");
+                        continue;
+                    }
+
+                    urlsTour.AddRange(urls);
+                }
+
+                foreach (var url in urlsTour)
+                {
+                    var htmlTour = await _web.GetPageTour(url, Cookie, Proxy);
+                    if (htmlTour == null)
+                    {
+                        Write.Logs("Не отримано тур");
+                        continue;
+                    }
+
+                    var data = FillingData(htmlTour, url);
+                    if (data != null)
+                    {
+                        data.UrlTour = $"https://advant.club{url}";
+                        data.CountryFrom = CountryFrom;
+
+                        datasTours.Add(data);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Write.Logs("Помилка при парсингу даних готелів");
+                Write.Logs(ex.ToString());
             }
 
             return datasTours;
@@ -71,8 +103,10 @@ namespace Advant
 
                 return listUrls;
             }
-            catch 
+            catch (Exception ex)
             {
+                Write.Logs("Помилка при отриманні URL готелю");
+                Write.Logs(ex.ToString());
                 return null;
             }
            
@@ -87,23 +121,24 @@ namespace Advant
 
                 return list;
             }
-            catch
+            catch(Exception ex)
             {
+                Write.Logs("Помилка при отриманні URL туру");
+                Write.Logs(ex.ToString());
                 return null;
             }
-           
-
-            
-
-           
         }
 
         private DataOutput FillingData(HtmlDocument html, string r)
         {
+            if (!html.Text.Contains("h2 mb0 pb10"))
+            {
+                return null;
+            }
+            DataOutput data = new DataOutput();
+
             try
             {
-                DataOutput data = new DataOutput();
-
                 data.NameHotel = html.DocumentNode.SelectSingleNode("//h1[@class='h2 mb0 pb10']").InnerText;
 
                 var star = html.DocumentNode.SelectSingleNode("//div[@class='bl-list-stars pull-left']/i").Attributes["class"].Value;
@@ -169,8 +204,10 @@ namespace Advant
 
                 return data;
             }
-            catch
+            catch(Exception ex)
             {
+                Write.Logs("Помилка при парсингу готеля");
+                Write.Logs(ex.ToString());
                 return null;
             }
         }

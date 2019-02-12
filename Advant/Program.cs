@@ -17,7 +17,10 @@ namespace Advant
 
             while (true)
             {
-                Task.Factory.StartNew(() => _job.Run(dataInput));
+                _job.Run(dataInput).ConfigureAwait(false);
+               // task.Start();
+
+                //Task.Factory.StartNew(() => _job.Run(dataInput));
 
                 Thread.Sleep(timeSleep);
             }

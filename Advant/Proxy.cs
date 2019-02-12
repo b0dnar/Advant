@@ -13,7 +13,7 @@ namespace Advant
         {
             string proxy = "";
             string userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36";
-            AdvantWeb _web = new AdvantWeb(userAgent, null);
+            AdvantWeb _web = new AdvantWeb(userAgent);
             
             List<string> allProxy = new List<string>();
             Random rand = new Random();

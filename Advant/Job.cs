@@ -46,14 +46,14 @@ namespace Advant
 
             try
             {
-                proxy = "";//await _proxy.SearchProxy();
-                           /*   if (proxy == null)
-                              {
-                                  Write.Logs("Проксі не знайдено");
-                                  return;
-                              }
-                              Write.Logs($"Проксі - {proxy}");
-                              */
+                proxy = await _proxy.SearchProxy();
+                if (proxy == null)
+                {
+                    Write.Logs("Проксі не знайдено");
+                    return;
+                }
+                Write.Logs($"Проксі - {proxy}");
+
 
                 cookie = await _web.GetCookie(proxy);
                 if (cookie == null)
@@ -100,6 +100,8 @@ namespace Advant
 
                     if (url == null)
                     {
+                        count++;
+                        Write.Logs($"Не отримано ссилку по фільтру.\nFilter - {url}");
                         continue;
                     }
 
@@ -128,12 +130,16 @@ namespace Advant
 
                     if (noLoadHotels)
                     {
+                        count++;
+                        Write.Logs("Не може загрузити готелі");
                         continue;
                     }
 
                     var datas = await parse.ParseHotel(url);
                     if (datas == null)
                     {
+                        count++;
+                        Write.Logs("Помилка при парсингу готелів");
                         continue;
                     }
 

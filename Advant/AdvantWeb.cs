@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
+using System.Threading;
 
 namespace Advant
 {
@@ -44,6 +45,11 @@ namespace Advant
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -81,7 +87,12 @@ namespace Advant
             request.Headers.Add("Cookie", cookie);
             request.UseDefaultCredentials = false;
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            request.Proxy = new WebProxy(proxy);
+            request.Proxy = new WebProxy(proxy, false);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -127,12 +138,17 @@ namespace Advant
             request.Referer = "https://advant.club/search";
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+          //  request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -166,12 +182,17 @@ namespace Advant
             request.Referer = "https://advant.club/search";
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+            //request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -195,12 +216,17 @@ namespace Advant
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
             request.Headers.Add("Upgrade-Insecure-Requests", "1");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+           // request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -231,13 +257,19 @@ namespace Advant
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
             request.Headers.Add("Upgrade-Insecure-Requests", "1");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+           // request.KeepAlive = true;
             request.Referer = "https://advant.club/search/";
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
+            
 
             try
             {
@@ -264,13 +296,18 @@ namespace Advant
             request.Accept = "application/json, text/javascript, */*; q=0.01";
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+            //request.KeepAlive = true;
             request.Referer = url;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -302,13 +339,18 @@ namespace Advant
             request.Accept = "*/*";
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+           // request.KeepAlive = true;
             request.Referer = url;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -341,12 +383,17 @@ namespace Advant
             request.Accept = "*/*";
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+           // request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {
@@ -378,12 +425,17 @@ namespace Advant
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
             request.Headers.Add("Upgrade-Insecure-Requests", "1");
             request.Headers.Add("Host", "advant.club");
-            request.KeepAlive = true;
+          //  request.KeepAlive = true;
             request.Headers.Add("Accept-Encoding", AcceptEncoding);
             request.Headers.Add("Accept-Language", AcceptLanguage);
             request.Headers.Add("Cookie", cookie);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.Proxy = new WebProxy(proxy);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
+            request.Timeout = 15000;
+            Thread.Sleep(100);
 
             try
             {

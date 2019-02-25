@@ -46,46 +46,40 @@ namespace Advant
 
             try
             {
-                proxy = await _proxy.SearchProxy();
-                if (proxy == null)
+                do
                 {
-                    Write.Logs("Проксі не знайдено");
-                    return;
+                    proxy = await _proxy.SearchProxy();
                 }
+                while (proxy == null);
                 Write.Logs($"Проксі - {proxy}");
 
-
-                cookie = await _web.GetCookie(proxy);
-                if (cookie == null)
+                do
                 {
-                    Write.Logs("Кукі не отримано");
-                    return;
+                    cookie = await _web.GetCookie(proxy);
                 }
+                while (cookie == null);
 
-                cookie = await _web.GetSessionId(cookie, proxy, dataInput.Login, dataInput.Password);
-                if (cookie == null)
+                do
                 {
-                    Write.Logs("Помилка при авторизації");
-                    return;
+                    cookie = await _web.GetSessionId(cookie, proxy, dataInput.Login, dataInput.Password);
                 }
+                while (cookie == null);
                 Write.Logs($"Кукі - {cookie}");
 
                 sendData = new SendData(_web, cookie, proxy);
 
-                var stateSetCity = await SetCityFrom(dataInput.NameCityFrom, sendData);
-                if (!stateSetCity)
+                bool stateSetCity = false;
+                while(!stateSetCity)
                 {
-                    Write.Logs("Не встановлено місто вильоту");
-                    return;
+                    stateSetCity = await SetCityFrom(dataInput.NameCityFrom, sendData);
                 }
 
-
-                List<string> filters = await GetFilters(dataInput, sendData);
-                if (filters == null)
+                List<string> filters;
+                do
                 {
-                    Write.Logs("Не отримано ід міста вильоту");
-                    return;
+                    filters = await GetFilters(dataInput, sendData);
                 }
+                while (filters == null);
 
                 AdvantParse parse = new AdvantParse(sendData, dataInput.NameCountryFrom);
                 List<DataOutput> allData = new List<DataOutput>();
